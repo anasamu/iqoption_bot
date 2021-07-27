@@ -1,0 +1,6 @@
+iqoptionapi @ git+git://github.com/Lu-Yi-Hsun/iqoptionapi.git@e96ba2c5b905a139a4765167b08c5df48cf57773
+numpy
+pandas
+tensorflow
+scikit-learn
+grpcio
