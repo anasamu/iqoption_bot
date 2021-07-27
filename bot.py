@@ -57,7 +57,7 @@ def login(verbose = False, iq = None, checkConnection = False):
 
 		if iq == None:
 			print("Mencoba login ke akun IQ Option...")
-			iq=IQ_Option('anasamu7@gmail.com','smkn1gtlo.')
+			iq=IQ_Option('anasamu7@gmail.com','1234567890')
 			iq.connect()
 
 		if iq != None:
