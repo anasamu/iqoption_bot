@@ -11,14 +11,27 @@ from tensorflow.keras.layers import Dense, Dropout, LSTM, BatchNormalization
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.callbacks import TensorBoard, EarlyStopping
 from sklearn.preprocessing import MinMaxScaler
+import os
+import random
 
-duration = 60 # menit
-duration_sec = 60 * duration # detik
-candle_interval = 60 # menit
-total_candle = 1000
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+
+ducurrencyn = 1 # menit
+ducurrencyn_sec = 60 * ducurrencyn # detik
+candle_interval = 30 # menit
+total_candle = 300
 currency 	= 'EURUSD'
-FUTURE_PERIOD_PREDICT = 3
+FUTURE_PERIOD_PREDICT = 1
 SEQ_LEN = 5
+
+def header_app():
+	os.system('cls||clear')
+	print(f"================================================")
+	print(f"> Trading Bot v1.0 (BETA)")
+	print(f"> Author : Anas Amu")
+	print(f"================================================")
+	print(f"> Segala resiko di tanggung sendiri")
+	print(f"================================================")
 
 def classify(current,future):
 		if float(future) > float(current):
@@ -27,7 +40,7 @@ def classify(current,future):
 				return 0
 
 def higher(iq,Money,Actives):
-		done,id = iq.buy(Money,Actives,"call", duration)
+		done,id = iq.buy(Money,Actives,"call", ducurrencyn)
 		if not done:
 				print('Error call')
 				print(done, id)
@@ -36,7 +49,7 @@ def higher(iq,Money,Actives):
 		return id
 
 def lower(iq,Money,Actives):
-		done,id = iq.buy(Money,Actives,"put", duration)
+		done,id = iq.buy(Money,Actives,"put", ducurrencyn)
 		if not done:
 				print('Error put')
 				print(done, id)
@@ -50,6 +63,9 @@ def get_balance(iq):
 def get_profit(iq):
 		return iq.get_all_profit()[currency]['turbo']
 
+def cek_win(iq, id):
+	return iq.check_win(id)
+
 def login(verbose = False, iq = None, checkConnection = False):
 
 		if verbose:
@@ -57,7 +73,7 @@ def login(verbose = False, iq = None, checkConnection = False):
 
 		if iq == None:
 			print("Mencoba login ke akun IQ Option...")
-			iq=IQ_Option('anasamu7@gmail.com','1234567890')
+			iq=IQ_Option('anasamu7@gmail.com','smkn1gtlo.')
 			iq.connect()
 
 		if iq != None:
@@ -73,7 +89,6 @@ def login(verbose = False, iq = None, checkConnection = False):
 				time.sleep(3)
 
 		iq.change_balance("PRACTICE")
-		print(f"Saldo anda saat ini: ${iq.get_balance()}")
 		return iq
 
 def get_all_candles(iq,Actives,interval = 15, candle_count = 1000):
@@ -251,58 +266,126 @@ def scaler(iq, df):
 
 	score 	= model.evaluate(validation_x, validation_y, verbose=0)
 	prediction = pd.DataFrame(model.predict(validation_x))
+	return prediction
+
+def trading(iq,prediction, currency):
 	i = 0
 	bid = True
 	bets = []
-	MONEY = 10000 
+	win_amm = 0
+	MONEY = get_balance(iq) 
 	trade = True
 	martingale = 2
-	bet_money = 100
-	ratio = currency
+	bet_percent = 10
+	total_trading_loss = 3
+	total_trading_profit = 10
+	bet_money = (bet_percent / 100 * MONEY)
+	result = prediction
+	profit = 0
+	total_profit = 0
+	total_loss = 0
+	loss_profit = 0
+	currency_data = ['EURUSD','EURGBP','GBPJPY','GBPUSD','EURJPY','AUDUSD']
 
 	while(1):
-		if datetime.datetime.now().second < 30 and i % 2 == 0: #GARANTE QUE ELE VAI APOSTAR NA SEGUNDA, POIS AQUI ELE JÁ PEGA OS DADOS DE UMA NA FRENTE,
-			time_taker = time.time()
-			result = prediction
-			print('probability of PUT: ',result[0][0])
-			print('probability of CALL: ',result[0][1])
-			i = i + 1  
-		if datetime.datetime.now().second == 59 and i%2 == 1:
-				if result[0][0] > 0.5 :
-						print(f'Jual > Turun = {ratio}')
-						id = lower(iq,bet_money,ratio)
-						i = i + 1   
-						trade = True
-				elif result[0][0] < 0.5 :
-						print(f'Beli > Naik = {ratio}')
-						id = higher(iq,bet_money,ratio) 
-						i = i + 1
-						trade = True
-				else:
-						trade = False
-						i = i + 1
 
-				if trade:
-						print("Trading sedang berlangsung...")
-						time.sleep(duration_sec)
-						betsies = iq.get_optioninfo_v2(1)
-						betsies = betsies['msg']['closed_options']
-						
-						for bt in betsies:
-								bets.append(bt['win'])
-						win = bets[-1:]
-						print(win)
-						if win == ['win']:
-								bet_money = 1
-								
-						elif win == ['lose']:
-								bet_money = bet_money * martingale # martingale V3
-								
-						else:
-								bets.append(0)
-				
+		laba = get_balance(iq) - MONEY
+		header_app()
+		print(f"# Saldo awal Trade : {MONEY}")
+		print(f"# Saldo anda saat ini : {get_balance(iq)}")
+		print(f"# total profit : {total_profit}x")
+		print(f"# total loss : {total_loss}x")
+		print(f"# Laba/Rugi : ${laba}")
+		print(f"================================================")
+		if(total_loss > 0):
+			bet_money = (bet_percent / 100 * MONEY)
+		
+		total_profit_end = total_profit - total_loss
+		total_end = (MONEY + profit - loss_profit)
+		
+		if(total_loss > total_trading_loss):
+			currency_lama = currency
+			currency_data.remove(currency)
+			currency = random.choice(currency_data)
+			print(f"# Total lost pada pasar {currency_lama} saat ini {total_loss}x, system akan berganti keperdagangan pasar yang baru : {currency}")
+			
+			if(total_loss > total_profit):
+				print(f"# Total loss untuk trading hari ini sudah mencapai batas..")
+				exit()
+			else:
+				total_loss = 0
+
+		if(total_profit_end >= total_trading_profit):
+			
+			print(f"# Batas profit untuk Trading hari ini sudah mencapai batas..")
+			exit()
+
+		if result[0][0] > 0.5 :
+				print(f'> Open Posisi : PUT')
+				trade_id = lower(iq,bet_money,currency)
+				trade = True
+		elif result[0][0] < 0.5 :
+				print(f'> Open Posisi : CALL')
+				trade_id = higher(iq,bet_money,currency) 
+				trade = True
+		else:
+				trade_id = 0
+				trade = False
+
+		if trade:
+
+			print(f'> Bet Open posisi : ${bet_money}')	
+			print(f"================================================")
+			print("# Trading sedang berlangsung...")
+			
+			print("# Menunggu Trading berakhir...")
+			time.sleep(ducurrencyn_sec + 20)
+			
+			print(f"# Menunggu analisa hasil trading...")
+			tempo = datetime.datetime.now().second
+			while(tempo != 1):
+				tempo = datetime.datetime.now().second
+
+			betsies = iq.get_optioninfo_v2(1)
+			betsies = betsies['msg']['closed_options']
+			for bt in betsies:
+					bets.append(bt['win'])
+					win_amm = bt['win_amount']
+
+			win = bets[-1:]
+			win_amount = win_amm
+			print(f"================================================")
+			if(win == ['win']):
+				# bet_percent = bet_percent + 1
+				profit = float(win_amount)
+				total_profit = float(total_profit) + float(1)
+				#bet_money = (bet_percent / 100 * get_balance(iq))
+				print(f"> Total profit : {total_profit}x")
+				print(f"> Profit : ${win_amount}")
+				#print(f"Memperbaharui harga open posisi berikutnya : {bet_money}")
+			elif(win == ['loose']):
+				loss_profit = float(bet_money)
+				total_loss = float(total_loss) + float(1)
+				bet_money = bet_money * martingale # martingale V3
+				print(f"> Total loss : {total_loss}x")
+				print(f"> Loss : ${loss_profit}")
+				print(f"> Kompensasi loss profit : {bet_money}")
+			else:
+				print(f"> Hasil Netral : {win_amount}")
+				bets.append(0)
+				win_amm = 0
+
+		print(f"================================================")	
+		print("# Persiapan mengambil data candle stick...")
+		time.sleep(30)
+		print(f"================================================")
+		print("# Sedang memuat data analisis berikutnya...")
+		candle = get_all_candles(iq,currency,candle_interval,total_candle)
+		result = scaler(iq,candle)
+
+header_app()
 
 iq = login()
-
-candle = get_all_candles(iq,currency,candle_interval,total_candle)
-scaler(iq,candle)
+candle 			= get_all_candles(iq,currency,candle_interval,total_candle)
+prediction 	= scaler(iq,candle)
+trading(iq, prediction, currency)
