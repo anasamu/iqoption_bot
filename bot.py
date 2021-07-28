@@ -73,7 +73,7 @@ def login(verbose = False, iq = None, checkConnection = False):
 
 		if iq == None:
 			print("Mencoba login ke akun IQ Option...")
-			iq=IQ_Option('anasamu7@gmail.com','smkn1gtlo.')
+			iq=IQ_Option('anasamu7@gmail.com','1234567890')
 			iq.connect()
 
 		if iq != None:
@@ -286,7 +286,7 @@ def trading(iq,prediction, currency):
 	total_loss = 0
 	loss_profit = 0
 	currency_data = ['EURUSD','EURGBP','GBPJPY','GBPUSD','EURJPY','AUDUSD']
-
+	try_other_market = 0
 	while(1):
 
 		laba = get_balance(iq) - MONEY
@@ -304,22 +304,23 @@ def trading(iq,prediction, currency):
 		total_end = (MONEY + profit - loss_profit)
 		
 		if(total_loss > total_trading_loss):
+			try_other_market = try_other_market + 1
 			currency_lama = currency
 			currency_data.remove(currency)
 			currency = random.choice(currency_data)
 			print(f"# Total lost pada pasar {currency_lama} saat ini {total_loss}x, system akan berganti keperdagangan pasar yang baru : {currency}")
 			
-			if(total_loss > total_profit):
+			if(try_other_market > total_profit):
 				print(f"# Total loss untuk trading hari ini sudah mencapai batas..")
 				exit()
 			else:
 				total_loss = 0
 
 		if(total_profit_end >= total_trading_profit):
-			
 			print(f"# Batas profit untuk Trading hari ini sudah mencapai batas..")
 			exit()
 
+		print(f'> Open Market : {currency}')
 		if result[0][0] > 0.5 :
 				print(f'> Open Posisi : PUT')
 				trade_id = lower(iq,bet_money,currency)
