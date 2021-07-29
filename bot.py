@@ -285,8 +285,8 @@ def scaler(iq, df):
 	return prediction
 
 def trading(iq,prediction, currency):
-	bet_percent_demo = input("# Open Posisi (DEMO)% : ").upper()
-	bet_percent_real = input("# Open Posisi (REAL)% : ").upper()
+	bet_percent_demo = float(input("# Open Posisi (DEMO)% : "))
+	bet_percent_real = float(input("# Open Posisi (REAL)% : "))
 	
 	i = 0
 	bid = True
