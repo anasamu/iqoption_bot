@@ -435,9 +435,9 @@ def trading(iq,prediction, currency):
 				print(f"# Silahkan konfirmasi Market Pasar yang ingin anda masuk.")
 				print(f"# kosongkan jika ingin masuk di market yang akan dipilih secara acak")
 				no = 0
-				for item in array_2:
+				for item in currency_data:
 					no = no + 1
-					print(f"> {no}. {currency_data}")
+					print(f"> {no}. {item}")
 
 				choice = input("# Input Pilihan anda : ").upper()
 				
