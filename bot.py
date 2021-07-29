@@ -285,6 +285,9 @@ def scaler(iq, df):
 	return prediction
 
 def trading(iq,prediction, currency):
+	bet_percent_demo = input("# Open Posisi (DEMO)% : ").upper()
+	bet_percent_real = input("# Open Posisi (REAL)% : ").upper()
+	
 	i = 0
 	bid = True
 	bets = []
@@ -306,9 +309,13 @@ def trading(iq,prediction, currency):
 	currency_data = ['EURUSD','EURGBP','GBPJPY','GBPUSD','EURJPY','AUDUSD']
 	while(1):
 		if(account_test == "DEMO"):
+			bet_percent = bet_percent_demo
 			currency_money = "$"
 		else:
 			currency_money = "IDR"
+
+			if(real_account_check == 0):
+				bet_percent = bet_percent_real
 
 		laba = get_balance(iq) - MONEY
 		percent_profit = ((laba / get_balance(iq)) * 100)
